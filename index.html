@@ -23,7 +23,7 @@
             color: var(--text);
             -webkit-user-select: none;
             user-select: none;
-            max-width: 600px; /* Удобный размер на ПК и телефонах */
+            max-width: 600px;
             margin: 0 auto;
             border-left: 1px solid #422b26;
             border-right: 1px solid #422b26;
@@ -337,7 +337,6 @@
             { name: "Поэт", gift: 300, prestige: 100 }
         ];
 
-        // Автосохранение
         function saveGame() {
             localStorage.setItem('trade_master_save', JSON.stringify(state));
         }
@@ -391,7 +390,6 @@
             document.getElementById('player-title').innerText = "Статус: " + titleObj.name;
             document.getElementById('title-progress').innerText = `Престиж: ${state.prestige} (Множитель дохода: x${titleObj.bonusMult})`;
 
-            // Лавки
             const shopsContainer = document.getElementById('shops-list');
             shopsContainer.innerHTML = '';
             state.shops.forEach((shop, index) => {
@@ -403,7 +401,6 @@
                     </div>`;
             });
 
-            // Умельцы
             const craftsmenContainer = document.getElementById('craftsmen-list');
             craftsmenContainer.innerHTML = '';
             state.craftsmen.forEach((c, index) => {
@@ -415,7 +412,6 @@
                     </div>`;
             });
 
-            // Гарем
             const haremContainer = document.getElementById('harem-list');
             haremContainer.innerHTML = '';
             state.harem.forEach((h, index) => {
@@ -433,7 +429,6 @@
                     </div>`;
             });
 
-            // Потомки
             const heirsContainer = document.getElementById('heirs-list');
             heirsContainer.innerHTML = state.heirs.length === 0 ? '<p>У вас пока нет потомков.</p>' : '';
             state.heirs.forEach((heir) => {
@@ -447,7 +442,6 @@
                     </div>`;
             });
 
-            // Инвентарь
             const invContainer = document.getElementById('inventory-list');
             invContainer.innerHTML = state.inventory.length === 0 ? '<p>Инвентарь пуст.</p>' : '';
             state.inventory.forEach((item, index) => {
@@ -458,7 +452,6 @@
                     </div>`;
             });
 
-            // Банкет
             const guestsContainer = document.getElementById('guests-list');
             guestsContainer.innerHTML = state.guests.length === 0 ? '<p>Зал пуст.</p>' : '';
             state.guests.forEach((g) => {
@@ -499,6 +492,120 @@
                 }
                 saveGame();
                 updateUI();
+            }
+        }
+
+        function openGiftModal(index) {
+            selectedBeautyIndex = index;
+            const modal = document.getElementById('gift-modal');
+            const list = document.getElementById('gift-items-list');
+            const beauty = state.harem[index];
+
+            document.getElementById('gift-modal-title').innerText = `Подарок для ${beauty.name}`;
+            list.innerHTML = '';
+
+            if (state.inventory.length === 0) {
+                list.innerHTML = '<p>В вашей сумке нет предметов для подарка!</p>';
+            } else {
+                state.inventory.forEach((item, invIdx) => {
+                    list.innerHTML += `
+                        <div class="card">
+                            <div><strong>${item.icon} ${item.name}</strong><br><small>+${item.favorBonus} к симпатии</small></div>
+                            <button class="btn btn-gift" onclick="giveGift(${invIdx})">Подарить</button>
+                        </div>`;
+                });
+            }
+            modal.style.display = 'flex';
+        }
+
+        function closeGiftModal() {
+            document.getElementById('gift-modal').style.display = 'none';
+        }
+
+        function giveGift(invIdx) {
+            if (selectedBeautyIndex === null) return;
+            let beauty = state.harem[selectedBeautyIndex];
+            let item = state.inventory[invIdx];
+
+            beauty.favor += item.favorBonus;
+            alert(`🎁 Вы подарили ${item.icon} ${item.name} наложнице ${beauty.name}! Симпатия выросла на +${item.favorBonus}.`);
+
+            state.inventory.splice(invIdx, 1);
+            closeGiftModal();
+            saveGame();
+            updateUI();
+        }
+
+        function sellItem(index) {
+            let item = state.inventory[index];
+            state.coins += item.price;
+            state.inventory.splice(index, 1);
+            saveGame();
+            updateUI();
+        }
+
+        function goTravel() {
+            if (state.energy <= 0) { alert("Нет энергии!"); return; }
+            state.energy--;
+            
+            const log = document.getElementById('travel-log');
+            const rand = Math.random();
+            let msg = "";
+
+            if (rand < 0.25) {
+                if (Math.random() < 0.5 && potentialBeautyPool.length > 0) {
+                    let beautyIndex = Math.floor(Math.random() * potentialBeautyPool.length);
+                    let newBeauty = potentialBeautyPool.splice(beautyIndex, 1)[0];
+                    state.harem.push({
+                        id: 'beauty_' + Date.now(),
+                        name: newBeauty.name,
+                        avatar: newBeauty.avatar,
+                        favor: 1,
+                        basePrice: 250
+                    });
+                    msg = `🌸 Вы встретили прекрасную девушку ${newBeauty.avatar} ${newBeauty.name}! Она присоединилась к вам.`;
+                } else if (state.harem.length > 0) {
+                    let h = state.harem[Math.floor(Math.random() * state.harem.length)];
+                    h.favor += 2;
+                    msg = `🌸 Вы прогулялись с ${h.avatar} ${h.name}. (+2 к симпатии)`;
+                }
+            } else if (rand < 0.5) {
+                let foundCoins = Math.floor(Math.random() * 200) + 50;
+                state.coins += foundCoins;
+                msg = `💰 Найдено ${foundCoins} монет!`;
+            } else if (rand < 0.75) {
+                let items = [
+                    { name: "Шелковый веер", icon: "🪭", price: 150, favorBonus: 2 },
+                    { name: "Нефритовая подвеска", icon: "📿", price: 400, favorBonus: 5 },
+                    { name: "Древняя ваза", icon: "🏺", price: 800, favorBonus: 10 }
+                ];
+                let item = items[Math.floor(Math.random() * items.length)];
+                state.inventory.push(item);
+                msg = `🎁 Найдена вещь: ${item.icon} ${item.name}!`;
+            } else {
+                state.prestige += 15;
+                msg = `📜 Вы помогли местным купцам (+15 Престижа).`;
+            }
+
+            log.innerHTML = `<div>> ${msg}</div>` + log.innerHTML;
+            saveGame();
+            updateUI();
+        }
+
+        function startBanquet() {
+            if (state.coins < 500) { alert("Нужно 500 💰"); return; }
+            state.coins -= 500;
+            state.guests = [];
+
+            let count = Math.floor(Math.random() * 2) + 2;
+            for (let i = 0; i < count; i++) {
+                let npc = npcList[Math.floor(Math.random() * npcList.length)];
+                state.guests.push(npc);
+                state.coins += npc.gift;
+                state.prestige += npc.prestige;
+            }
+            saveGame();
+            updateUI();
         }
 
         function switchTab(evt, tabId) {
@@ -513,7 +620,7 @@
 
         setInterval(() => { if (state.energy < 10) { state.energy++; saveGame(); updateUI(); } }, 10000);
         setInterval(() => { state.coins += getCPS() / 10; updateUI(); }, 100);
-        setInterval(() => { saveGame(); }, 5000); // Регулярное сохранение каждые 5 сек
+        setInterval(() => { saveGame(); }, 5000);
 
         updateUI();
     </script>
