@@ -2,9 +2,8 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мастера Торгов</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Мастера Торгов — Браузерная игра</title>
     <style>
         :root {
             --bg-color: #2c1b18;
@@ -12,13 +11,24 @@
             --accent: #e6b85c;
             --text: #f5e6d3;
         }
+        * {
+            box-sizing: border-box;
+            touch-action: manipulation;
+        }
         body {
             margin: 0;
             padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-color);
             color: var(--text);
+            -webkit-user-select: none;
             user-select: none;
+            max-width: 600px; /* Удобный размер на ПК и телефонах */
+            margin: 0 auto;
+            border-left: 1px solid #422b26;
+            border-right: 1px solid #422b26;
+            min-height: 100vh;
+            position: relative;
         }
         .header {
             background-color: #1a100e;
@@ -37,40 +47,68 @@
             color: var(--accent);
         }
         .income { font-size: 11px; color: #a8927a; margin-top: 4px; }
+        
         .nav-tabs {
             display: flex;
             background-color: #1a100e;
             position: fixed;
             bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
             width: 100%;
+            max-width: 600px;
             border-top: 1px solid var(--accent);
             overflow-x: auto;
+            z-index: 150;
+            -webkit-overflow-scrolling: touch;
         }
         .tab-btn {
-            flex: 1; padding: 10px 2px; background: none; border: none;
-            color: var(--text); font-size: 10px; cursor: pointer; white-space: nowrap;
+            flex: 1; 
+            padding: 12px 6px; 
+            background: none; 
+            border: none;
+            color: var(--text); 
+            font-size: 11px; 
+            cursor: pointer; 
+            white-space: nowrap;
+            min-width: 65px;
         }
-        .tab-btn.active { background-color: var(--card-bg); color: var(--accent); font-weight: bold; }
-        .content { padding: 12px; padding-bottom: 75px; }
+        .tab-btn.active { 
+            background-color: var(--card-bg); 
+            color: var(--accent); 
+            font-weight: bold; 
+        }
+
+        .content { 
+            padding: 12px; 
+            padding-bottom: 100px; 
+        }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
+
         .card {
-            background: var(--card-bg); border: 1px solid #5c3e37;
-            border-radius: 8px; padding: 10px; margin-bottom: 8px;
-            display: flex; justify-content: space-between; align-items: center;
+            background: var(--card-bg); 
+            border: 1px solid #5c3e37;
+            border-radius: 8px; 
+            padding: 10px; 
+            margin-bottom: 10px;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
         }
         .card-avatar {
-            font-size: 38px;
-            margin-right: 12px;
+            font-size: 36px;
+            margin-right: 10px;
             background: #1a100e;
-            padding: 6px;
+            padding: 4px;
             border-radius: 50%;
             border: 1px solid var(--accent);
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 42px;
-            height: 42px;
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
         }
         .card-left {
             display: flex;
@@ -79,16 +117,39 @@
         .btn-group {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 6px;
         }
         .btn {
-            background-color: var(--accent); color: #1a100e; border: none;
-            padding: 6px 10px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 12px;
+            background-color: var(--accent); 
+            color: #1a100e; 
+            border: none;
+            padding: 8px 12px; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            font-size: 12px;
+            text-align: center;
+        }
+        .btn:active {
+            opacity: 0.8;
+            transform: scale(0.98);
         }
         .btn-gift {
-            background-color: #d9534f; color: white;
+            background-color: #d9534f; 
+            color: white;
         }
-        .btn:disabled { background-color: #666; cursor: not-allowed; }
+        .btn-reset {
+            background-color: #777;
+            color: white;
+            margin-top: 15px;
+            width: 100%;
+        }
+        .btn:disabled { 
+            background-color: #555 !important; 
+            color: #888 !important;
+            cursor: not-allowed; 
+        }
+
         .avatar-box {
             font-size: 50px; text-align: center; background: #1a100e;
             padding: 10px; border-radius: 50%; width: 60px; height: 60px;
@@ -102,16 +163,16 @@
         }
         .log-box {
             background: #1a100e; border: 1px solid var(--accent);
-            padding: 10px; border-radius: 6px; font-size: 12px; height: 100px; overflow-y: auto;
+            padding: 10px; border-radius: 6px; font-size: 12px; height: 120px; overflow-y: auto;
         }
-        /* Modal */
+
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); z-index: 200; justify-content: center; align-items: center;
+            background: rgba(0,0,0,0.85); z-index: 300; justify-content: center; align-items: center;
         }
         .modal-content {
             background: var(--card-bg); padding: 20px; border-radius: 10px; border: 2px solid var(--accent);
-            width: 80%; max-height: 70%; overflow-y: auto; text-align: center;
+            width: 85%; max-width: 400px; max-height: 80%; overflow-y: auto; text-align: center;
         }
     </style>
 </head>
@@ -130,7 +191,7 @@
         <!-- Профиль -->
         <div id="profile" class="tab-content active">
             <div class="avatar-box" id="current-avatar">🧙‍♂️</div>
-            <h2 style="text-align: center; margin: 5px 0;" id="player-name">Торговец</h2>
+            <h2 style="text-align: center; margin: 5px 0;">Торговец</h2>
             <p style="text-align: center; color: var(--accent); font-weight: bold;" id="player-title">Статус: Мелкий Лавочник</p>
 
             <h4>Выберите внешность:</h4>
@@ -145,6 +206,8 @@
                 <h4>🏆 Прогресс Титула</h4>
                 <p id="title-progress" style="font-size: 12px;">Престиж: 0 / 50 для следующего статуса</p>
             </div>
+
+            <button class="btn btn-reset" onclick="resetGame()">🔄 Начать игру заново</button>
         </div>
 
         <!-- Лавки -->
@@ -174,14 +237,14 @@
         <!-- Инвентарь -->
         <div id="inventory" class="tab-content">
             <h3>🎒 Ваша Сокровищница</h3>
-            <p>Предметы из походов и банкетов хранятся здесь.</p>
+            <p style="font-size: 12px;">Предметы из походов хранятся здесь.</p>
             <div id="inventory-list"></div>
         </div>
 
         <!-- Путешествия -->
         <div id="travel" class="tab-content">
             <h3>🗺️ Шелковый Путь</h3>
-            <button class="btn" style="width:100%; padding:12px;" onclick="goTravel()">Отправиться в путь (-1⚡)</button>
+            <button class="btn" style="width:100%; padding:14px; font-size: 14px;" onclick="goTravel()">Отправиться в путь (-1⚡)</button>
             <h4 style="margin-top:15px;">Журнал похода:</h4>
             <div id="travel-log" class="log-box">Нажмите "Отправиться в путь".</div>
         </div>
@@ -201,31 +264,29 @@
         </div>
     </div>
 
-    <!-- Модальное окно для выбора подарка -->
+    <!-- Модальное окно выбора подарка -->
     <div id="gift-modal" class="modal">
         <div class="modal-content">
             <h3 id="gift-modal-title">Выберите подарок</h3>
             <div id="gift-items-list"></div>
-            <button class="btn" style="margin-top:15px; background:#777;" onclick="closeGiftModal()">Закрыть</button>
+            <button class="btn" style="margin-top:15px; background:#777; color:white;" onclick="closeGiftModal()">Закрыть</button>
         </div>
     </div>
 
+    <!-- Навигация -->
     <div class="nav-tabs">
-        <button class="tab-btn active" onclick="switchTab('profile')">👤 Профиль</button>
-        <button class="tab-btn" onclick="switchTab('shops')">🏪 Лавки</button>
-        <button class="tab-btn" onclick="switchTab('craftsmen')">🧰 Мастера</button>
-        <button class="tab-btn" onclick="switchTab('harem')">🌸 Гарем</button>
-        <button class="tab-btn" onclick="switchTab('heirs')">👶 Дети</button>
-        <button class="tab-btn" onclick="switchTab('inventory')">🎒 Сумка</button>
-        <button class="tab-btn" onclick="switchTab('travel')">🗺️ Поход</button>
-        <button class="tab-btn" onclick="switchTab('banquet')">🍷 Банкет</button>
+        <button class="tab-btn active" onclick="switchTab(event, 'profile')">👤 Профиль</button>
+        <button class="tab-btn" onclick="switchTab(event, 'shops')">🏪 Лавки</button>
+        <button class="tab-btn" onclick="switchTab(event, 'craftsmen')">🧰 Мастера</button>
+        <button class="tab-btn" onclick="switchTab(event, 'harem')">🌸 Гарем</button>
+        <button class="tab-btn" onclick="switchTab(event, 'heirs')">👶 Дети</button>
+        <button class="tab-btn" onclick="switchTab(event, 'inventory')">🎒 Сумка</button>
+        <button class="tab-btn" onclick="switchTab(event, 'travel')">🗺️ Поход</button>
+        <button class="tab-btn" onclick="switchTab(event, 'banquet')">🍷 Банкет</button>
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-
-        let state = {
+        const defaultState = {
             avatar: '🧙‍♂️',
             coins: 100,
             energy: 10,
@@ -247,6 +308,7 @@
             guests: []
         };
 
+        let state = loadSave();
         let selectedBeautyIndex = null;
 
         const potentialBeautyPool = [
@@ -275,6 +337,27 @@
             { name: "Поэт", gift: 300, prestige: 100 }
         ];
 
+        // Автосохранение
+        function saveGame() {
+            localStorage.setItem('trade_master_save', JSON.stringify(state));
+        }
+
+        function loadSave() {
+            let saved = localStorage.getItem('trade_master_save');
+            if (saved) {
+                try { return JSON.parse(saved); } catch(e){}
+            }
+            return JSON.parse(JSON.stringify(defaultState));
+        }
+
+        function resetGame() {
+            if (confirm("Вы уверены, что хотите начать заново? Весь прогресс будет сброшен.")) {
+                localStorage.removeItem('trade_master_save');
+                state = JSON.parse(JSON.stringify(defaultState));
+                updateUI();
+            }
+        }
+
         function getCurrentTitle() {
             let current = titles[0];
             for (let t of titles) {
@@ -294,6 +377,7 @@
         function setAvatar(emoji) {
             state.avatar = emoji;
             document.getElementById('current-avatar').innerText = emoji;
+            saveGame();
         }
 
         function updateUI() {
@@ -301,8 +385,8 @@
             document.getElementById('energy').innerText = state.energy;
             document.getElementById('prestige').innerText = state.prestige;
             document.getElementById('cps').innerText = getCPS().toFixed(1);
+            document.getElementById('current-avatar').innerText = state.avatar;
 
-            // Профиль
             let titleObj = getCurrentTitle();
             document.getElementById('player-title').innerText = "Статус: " + titleObj.name;
             document.getElementById('title-progress').innerText = `Престиж: ${state.prestige} (Множитель дохода: x${titleObj.bonusMult})`;
@@ -388,13 +472,13 @@
         function buyShop(index) {
             let shop = state.shops[index];
             let price = Math.floor(shop.basePrice * Math.pow(1.15, shop.count));
-            if (state.coins >= price) { state.coins -= price; shop.count++; updateUI(); }
+            if (state.coins >= price) { state.coins -= price; shop.count++; saveGame(); updateUI(); }
         }
 
         function upgradeCraftsman(index) {
             let c = state.craftsmen[index];
             let price = Math.floor(c.basePrice * Math.pow(1.5, c.level));
-            if (state.coins >= price) { state.coins -= price; c.level++; updateUI(); }
+            if (state.coins >= price) { state.coins -= price; c.level++; saveGame(); updateUI(); }
         }
 
         function visitBeauty(index) {
@@ -413,66 +497,26 @@
                     });
                     alert(`🌸 ${h.name} родила вам ребёнка: ${randomAvatar} ${randomName}! (+5% к доходу)`);
                 }
+                saveGame();
                 updateUI();
-            }
         }
 
-        // --- Функция Подарков ---
-        function openGiftModal(index) {
-            selectedBeautyIndex = index;
-            const modal = document.getElementById('gift-modal');
-            const list = document.getElementById('gift-items-list');
-            const beauty = state.harem[index];
-
-            document.getElementById('gift-modal-title').innerText = `Подарок для ${beauty.name}`;
-            list.innerHTML = '';
-
-            if (state.inventory.length === 0) {
-                list.innerHTML = '<p>В вашей сумке нет предметов для подарка!</p>';
-            } else {
-                state.inventory.forEach((item, invIdx) => {
-                    list.innerHTML += `
-                        <div class="card">
-                            <div><strong>${item.icon} ${item.name}</strong><br><small>+${item.favorBonus} к симпатии</small></div>
-                            <button class="btn btn-gift" onclick="giveGift(${invIdx})">Подарить</button>
-                        </div>`;
-                });
-            }
-            modal.style.display = 'flex';
-        }
-
-        function closeGiftModal() {
-            document.getElementById('gift-modal').style.display = 'none';
-        }
-
-        function giveGift(invIdx) {
-            if (selectedBeautyIndex === null) return;
-            let beauty = state.harem[selectedBeautyIndex];
-            let item = state.inventory[invIdx];
-
-            beauty.favor += item.favorBonus;
-            alert(`🎁 Вы подарили ${item.icon} ${item.name} наложнице ${beauty.name}! Симпатия выросла на +${item.favorBonus}.`);
-
-            state.inventory.splice(invIdx, 1);
-            closeGiftModal();
-            updateUI();
-        }
-
-        function sellItem(index) {
-            let item = state.inventory[index];
-            state.coins += item.price;
-            state.inventory.splice(index, 1);
-            updateUI();
-        }
-
-        function goTravel() {
-            if (state.energy <= 0) { alert("Нет энергии!"); return; }
-            state.energy--;
+        function switchTab(evt, tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             
-            const log = document.getElementById('travel-log');
-            const rand = Math.random();
-            let msg = "";
+            document.getElementById(tabId).classList.add('active');
+            if (evt && evt.currentTarget) {
+                evt.currentTarget.classList.add('active');
+            }
+        }
 
-            if (rand < 0.25) {
-                if (Math.random() < 0.5 && potentialBeautyPool.length > 0) {
-       </details>
+        setInterval(() => { if (state.energy < 10) { state.energy++; saveGame(); updateUI(); } }, 10000);
+        setInterval(() => { state.coins += getCPS() / 10; updateUI(); }, 100);
+        setInterval(() => { saveGame(); }, 5000); // Регулярное сохранение каждые 5 сек
+
+        updateUI();
+    </script>
+</body>
+</html>
+</details>
