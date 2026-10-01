@@ -1,1 +1,210 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мастера Торгов</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg-color: #2c1b18;
+            --card-bg: #422b26;
+            --accent: #e6b85c;
+            --text: #f5e6d3;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            user-select: none;
+        }
+        .header {
+            background-color: #1a100e;
+            padding: 15px;
+            text-align: center;
+            border-bottom: 2px solid var(--accent);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .balance { font-size: 20px; font-weight: bold; color: var(--accent); }
+        .income { font-size: 12px; color: #a8927a; }
+        .nav-tabs {
+            display: flex;
+            background-color: #1a100e;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            border-top: 1px solid var(--accent);
+        }
+        .tab-btn {
+            flex: 1; padding: 12px 5px; background: none; border: none;
+            color: var(--text); font-size: 11px; cursor: pointer;
+        }
+        .tab-btn.active { background-color: var(--card-bg); color: var(--accent); font-weight: bold; }
+        .content { padding: 15px; padding-bottom: 70px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .card {
+            background: var(--card-bg); border: 1px solid #5c3e37;
+            border-radius: 8px; padding: 12px; margin-bottom: 10px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .btn {
+            background-color: var(--accent); color: #1a100e; border: none;
+            padding: 8px 12px; border-radius: 5px; font-weight: bold; cursor: pointer;
+        }
+        .btn:disabled { background-color: #666; cursor: not-allowed; }
+    </style>
+</head>
+<body>
 
+    <div class="header">
+        <div class="balance">💰 <span id="coins">0</span> монеты</div>
+        <div class="income">Доход: +<span id="cps">0</span>/сек</div>
+    </div>
+
+    <div class="content">
+        <div id="shops" class="tab-content active">
+            <h3>🏪 Рыночные Лавки</h3>
+            <div id="shops-list"></div>
+        </div>
+        <div id="craftsmen" class="tab-content">
+            <h3>🧰 Умельцы и Мастера</h3>
+            <div id="craftsmen-list"></div>
+        </div>
+        <div id="harem" class="tab-content">
+            <h3>🌸 Покои Красавиц</h3>
+            <div id="harem-list"></div>
+        </div>
+        <div id="heirs" class="tab-content">
+            <h3>👶 Наследники и Потомки</h3>
+            <div id="heirs-list"></div>
+        </div>
+    </div>
+
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('shops')">🏪 Лавки</button>
+        <button class="tab-btn" onclick="switchTab('craftsmen')">🧰 Умельцы</button>
+        <button class="tab-btn" onclick="switchTab('harem')">🌸 Гарем</button>
+        <button class="tab-btn" onclick="switchTab('heirs')">👶 Потомки</button>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let state = {
+            coins: 100,
+            shops: [
+                { id: 'bakery', name: 'Пекарня', count: 0, basePrice: 15, baseIncome: 1 },
+                { id: 'tea', name: 'Чайная', count: 0, basePrice: 100, baseIncome: 8 },
+                { id: 'silk', name: 'Лавка шелка', count: 0, basePrice: 1100, baseIncome: 40 }
+            ],
+            craftsmen: [
+                { id: 'smith', name: 'Кузнец Ли', level: 0, basePrice: 500, bonus: 0.1 },
+                { id: 'alchemist', name: 'Алхимик Вэй', level: 0, basePrice: 2000, bonus: 0.25 }
+            ],
+            harem: [
+                { id: 'meiling', name: 'Мэйлин', favor: 0, basePrice: 200 }
+            ],
+            heirs: []
+        };
+
+        function getCPS() {
+            let baseCps = state.shops.reduce((sum, s) => sum + (s.count * s.baseIncome), 0);
+            let craftsmanBonus = state.craftsmen.reduce((sum, c) => sum + (c.level * c.bonus), 0);
+            let heirBonus = state.heirs.length * 0.05;
+            return baseCps * (1 + craftsmanBonus + heirBonus);
+        }
+
+        function updateUI() {
+            document.getElementById('coins').innerText = Math.floor(state.coins);
+            document.getElementById('cps').innerText = getCPS().toFixed(1);
+
+            const shopsContainer = document.getElementById('shops-list');
+            shopsContainer.innerHTML = '';
+            state.shops.forEach((shop, index) => {
+                let price = Math.floor(shop.basePrice * Math.pow(1.15, shop.count));
+                shopsContainer.innerHTML += `
+                    <div class="card">
+                        <div><strong>${shop.name}</strong> (${shop.count})<br><small>+${shop.baseIncome}/сек</small></div>
+                        <button class="btn" onclick="buyShop(${index})" ${state.coins < price ? 'disabled' : ''}>${price} 💰</button>
+                    </div>`;
+            });
+
+            const craftsmenContainer = document.getElementById('craftsmen-list');
+            craftsmenContainer.innerHTML = '';
+            state.craftsmen.forEach((c, index) => {
+                let price = Math.floor(c.basePrice * Math.pow(1.5, c.level));
+                craftsmenContainer.innerHTML += `
+                    <div class="card">
+                        <div><strong>${c.name}</strong> (Ур. ${c.level})<br><small>Бонус: +${(c.level * c.bonus * 100).toFixed(0)}%</small></div>
+                        <button class="btn" onclick="upgradeCraftsman(${index})" ${state.coins < price ? 'disabled' : ''}>Улучшить (${price} 💰)</button>
+                    </div>`;
+            });
+
+            const haremContainer = document.getElementById('harem-list');
+            haremContainer.innerHTML = '';
+            state.harem.forEach((h, index) => {
+                let price = Math.floor(h.basePrice * Math.pow(1.3, h.favor));
+                haremContainer.innerHTML += `
+                    <div class="card">
+                        <div><strong>${h.name}</strong><br><small>Симпатия: ${h.favor}</small></div>
+                        <button class="btn" onclick="visitBeauty(${index})" ${state.coins < price ? 'disabled' : ''}>Ухаживать (${price} 💰)</button>
+                    </div>`;
+            });
+
+            const heirsContainer = document.getElementById('heirs-list');
+            heirsContainer.innerHTML = state.heirs.length === 0 ? '<p>У вас пока нет потомков.</p>' : '';
+            state.heirs.forEach((heir) => {
+                heirsContainer.innerHTML += `
+                    <div class="card">
+                        <div><strong>${heir.name}</strong><br><small>Бонус: +5% ко всем доходам</small></div>
+                        <span style="color: var(--accent);">👑 Наследник</span>
+                    </div>`;
+            });
+        }
+
+        function buyShop(index) {
+            let shop = state.shops[index];
+            let price = Math.floor(shop.basePrice * Math.pow(1.15, shop.count));
+            if (state.coins >= price) { state.coins -= price; shop.count++; updateUI(); }
+        }
+
+        function upgradeCraftsman(index) {
+            let c = state.craftsmen[index];
+            let price = Math.floor(c.basePrice * Math.pow(1.5, c.level));
+            if (state.coins >= price) { state.coins -= price; c.level++; updateUI(); }
+        }
+
+        function visitBeauty(index) {
+            let h = state.harem[index];
+            let price = Math.floor(h.basePrice * Math.pow(1.3, h.favor));
+            if (state.coins >= price) {
+                state.coins -= price;
+                h.favor++;
+                if (Math.random() < 0.3) {
+                    let heirName = "Наследник " + (state.heirs.length + 1);
+                    state.heirs.push({ name: heirName });
+                    alert(`🌸 ${h.name} родила вам наследника: ${heirName}! (+5% к доходу)`);
+                }
+                updateUI();
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        setInterval(() => { state.coins += getCPS() / 10; updateUI(); }, 100);
+        updateUI();
+    </script>
+</body>
+  </html>
+</details>
