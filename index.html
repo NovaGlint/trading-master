@@ -22,15 +22,21 @@
         }
         .header {
             background-color: #1a100e;
-            padding: 15px;
+            padding: 10px;
             text-align: center;
             border-bottom: 2px solid var(--accent);
             position: sticky;
             top: 0;
             z-index: 100;
         }
-        .balance { font-size: 20px; font-weight: bold; color: var(--accent); }
-        .income { font-size: 12px; color: #a8927a; }
+        .balance-grid {
+            display: flex;
+            justify-content: space-around;
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--accent);
+        }
+        .income { font-size: 11px; color: #a8927a; margin-top: 4px; }
         .nav-tabs {
             display: flex;
             background-color: #1a100e;
@@ -38,58 +44,181 @@
             bottom: 0;
             width: 100%;
             border-top: 1px solid var(--accent);
+            overflow-x: auto;
         }
         .tab-btn {
-            flex: 1; padding: 12px 5px; background: none; border: none;
-            color: var(--text); font-size: 11px; cursor: pointer;
+            flex: 1; padding: 10px 2px; background: none; border: none;
+            color: var(--text); font-size: 10px; cursor: pointer; white-space: nowrap;
         }
         .tab-btn.active { background-color: var(--card-bg); color: var(--accent); font-weight: bold; }
-        .content { padding: 15px; padding-bottom: 70px; }
+        .content { padding: 12px; padding-bottom: 75px; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .card {
             background: var(--card-bg); border: 1px solid #5c3e37;
-            border-radius: 8px; padding: 12px; margin-bottom: 10px;
+            border-radius: 8px; padding: 10px; margin-bottom: 8px;
             display: flex; justify-content: space-between; align-items: center;
+        }
+        .card-avatar {
+            font-size: 38px;
+            margin-right: 12px;
+            background: #1a100e;
+            padding: 6px;
+            border-radius: 50%;
+            border: 1px solid var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+        }
+        .card-left {
+            display: flex;
+            align-items: center;
+        }
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
         }
         .btn {
             background-color: var(--accent); color: #1a100e; border: none;
-            padding: 8px 12px; border-radius: 5px; font-weight: bold; cursor: pointer;
+            padding: 6px 10px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 12px;
+        }
+        .btn-gift {
+            background-color: #d9534f; color: white;
         }
         .btn:disabled { background-color: #666; cursor: not-allowed; }
+        .avatar-box {
+            font-size: 50px; text-align: center; background: #1a100e;
+            padding: 10px; border-radius: 50%; width: 60px; height: 60px;
+            line-height: 60px; margin: 0 auto 10px auto; border: 2px solid var(--accent);
+        }
+        .avatar-selector {
+            display: flex; justify-content: center; gap: 10px; margin-bottom: 15px;
+        }
+        .avatar-opt {
+            font-size: 28px; cursor: pointer; padding: 5px; border-radius: 8px; background: var(--card-bg);
+        }
+        .log-box {
+            background: #1a100e; border: 1px solid var(--accent);
+            padding: 10px; border-radius: 6px; font-size: 12px; height: 100px; overflow-y: auto;
+        }
+        /* Modal */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 200; justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: var(--card-bg); padding: 20px; border-radius: 10px; border: 2px solid var(--accent);
+            width: 80%; max-height: 70%; overflow-y: auto; text-align: center;
+        }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div class="balance">💰 <span id="coins">0</span> монеты</div>
+        <div class="balance-grid">
+            <div>💰 <span id="coins">0</span></div>
+            <div>⚡ Энергия: <span id="energy">10</span>/10</div>
+            <div>🏆 Престиж: <span id="prestige">0</span></div>
+        </div>
         <div class="income">Доход: +<span id="cps">0</span>/сек</div>
     </div>
 
     <div class="content">
-        <div id="shops" class="tab-content active">
+        <!-- Профиль -->
+        <div id="profile" class="tab-content active">
+            <div class="avatar-box" id="current-avatar">🧙‍♂️</div>
+            <h2 style="text-align: center; margin: 5px 0;" id="player-name">Торговец</h2>
+            <p style="text-align: center; color: var(--accent); font-weight: bold;" id="player-title">Статус: Мелкий Лавочник</p>
+
+            <h4>Выберите внешность:</h4>
+            <div class="avatar-selector">
+                <span class="avatar-opt" onclick="setAvatar('🧙‍♂️')">🧙‍♂️</span>
+                <span class="avatar-opt" onclick="setAvatar('🥷')">🥷</span>
+                <span class="avatar-opt" onclick="setAvatar('👸')">👸</span>
+                <span class="avatar-opt" onclick="setAvatar('🧔')">🧔</span>
+            </div>
+
+            <div class="card" style="flex-direction: column; align-items: flex-start;">
+                <h4>🏆 Прогресс Титула</h4>
+                <p id="title-progress" style="font-size: 12px;">Престиж: 0 / 50 для следующего статуса</p>
+            </div>
+        </div>
+
+        <!-- Лавки -->
+        <div id="shops" class="tab-content">
             <h3>🏪 Рыночные Лавки</h3>
             <div id="shops-list"></div>
         </div>
+
+        <!-- Умельцы -->
         <div id="craftsmen" class="tab-content">
-            <h3>🧰 Умельцы и Мастера</h3>
+            <h3>🧰 Умельцы</h3>
             <div id="craftsmen-list"></div>
         </div>
+
+        <!-- Гарем -->
         <div id="harem" class="tab-content">
             <h3>🌸 Покои Красавиц</h3>
             <div id="harem-list"></div>
         </div>
+
+        <!-- Потомки -->
         <div id="heirs" class="tab-content">
-            <h3>👶 Наследники и Потомки</h3>
+            <h3>👶 Наследники</h3>
             <div id="heirs-list"></div>
+        </div>
+
+        <!-- Инвентарь -->
+        <div id="inventory" class="tab-content">
+            <h3>🎒 Ваша Сокровищница</h3>
+            <p>Предметы из походов и банкетов хранятся здесь.</p>
+            <div id="inventory-list"></div>
+        </div>
+
+        <!-- Путешествия -->
+        <div id="travel" class="tab-content">
+            <h3>🗺️ Шелковый Путь</h3>
+            <button class="btn" style="width:100%; padding:12px;" onclick="goTravel()">Отправиться в путь (-1⚡)</button>
+            <h4 style="margin-top:15px;">Журнал похода:</h4>
+            <div id="travel-log" class="log-box">Нажмите "Отправиться в путь".</div>
+        </div>
+
+        <!-- Банкеты -->
+        <div id="banquet" class="tab-content">
+            <h3>🍷 Зал Банкетов</h3>
+            <div class="card">
+                <div>
+                    <strong>Устроить пир</strong><br>
+                    <small>Цена: 500 💰</small>
+                </div>
+                <button class="btn" onclick="startBanquet()">Устроить Пир</button>
+            </div>
+            <h4>Гости на банкете:</h4>
+            <div id="guests-list"></div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для выбора подарка -->
+    <div id="gift-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="gift-modal-title">Выберите подарок</h3>
+            <div id="gift-items-list"></div>
+            <button class="btn" style="margin-top:15px; background:#777;" onclick="closeGiftModal()">Закрыть</button>
         </div>
     </div>
 
     <div class="nav-tabs">
-        <button class="tab-btn active" onclick="switchTab('shops')">🏪 Лавки</button>
-        <button class="tab-btn" onclick="switchTab('craftsmen')">🧰 Умельцы</button>
+        <button class="tab-btn active" onclick="switchTab('profile')">👤 Профиль</button>
+        <button class="tab-btn" onclick="switchTab('shops')">🏪 Лавки</button>
+        <button class="tab-btn" onclick="switchTab('craftsmen')">🧰 Мастера</button>
         <button class="tab-btn" onclick="switchTab('harem')">🌸 Гарем</button>
-        <button class="tab-btn" onclick="switchTab('heirs')">👶 Потомки</button>
+        <button class="tab-btn" onclick="switchTab('heirs')">👶 Дети</button>
+        <button class="tab-btn" onclick="switchTab('inventory')">🎒 Сумка</button>
+        <button class="tab-btn" onclick="switchTab('travel')">🗺️ Поход</button>
+        <button class="tab-btn" onclick="switchTab('banquet')">🍷 Банкет</button>
     </div>
 
     <script>
@@ -97,7 +226,10 @@
         tg.expand();
 
         let state = {
+            avatar: '🧙‍♂️',
             coins: 100,
+            energy: 10,
+            prestige: 0,
             shops: [
                 { id: 'bakery', name: 'Пекарня', count: 0, basePrice: 15, baseIncome: 1 },
                 { id: 'tea', name: 'Чайная', count: 0, basePrice: 100, baseIncome: 8 },
@@ -108,22 +240,74 @@
                 { id: 'alchemist', name: 'Алхимик Вэй', level: 0, basePrice: 2000, bonus: 0.25 }
             ],
             harem: [
-                { id: 'meiling', name: 'Мэйлин', favor: 0, basePrice: 200 }
+                { id: 'meiling', name: 'Мэйлин', avatar: '💃', favor: 0, basePrice: 200 }
             ],
-            heirs: []
+            heirs: [],
+            inventory: [],
+            guests: []
         };
+
+        let selectedBeautyIndex = null;
+
+        const potentialBeautyPool = [
+            { name: 'Ланьхуа', avatar: '🪷' },
+            { name: 'Юэгуан', avatar: '🌙' },
+            { name: 'Фэнхуан', avatar: '🦚' },
+            { name: 'Сюэли', avatar: '❄️' },
+            { name: 'Цзиньчжи', avatar: '👑' },
+            { name: 'Мэйли', avatar: '🌸' }
+        ];
+
+        const childNames = ['Ливэй', 'Мэйлань', 'Сяомин', 'Юэ', 'Чэнь', 'Бохань', 'Тяньюй', 'Айлин', 'Минчжу', 'Жуи'];
+        const childAvatars = ['👦', '👧', '👶', '🤴', '👸'];
+
+        const titles = [
+            { minPrestige: 0, name: "Мелкий Лавочник", bonusMult: 1 },
+            { minPrestige: 50, name: "Городской Торговец", bonusMult: 1.2 },
+            { minPrestige: 200, name: "Гильдейский Купец", bonusMult: 1.5 },
+            { minPrestige: 500, name: "Имперский Поставщик", bonusMult: 2.0 },
+            { minPrestige: 1000, name: "Великий Магнат", bonusMult: 3.0 }
+        ];
+
+        const npcList = [
+            { name: "Губернатор", gift: 1000, prestige: 50 },
+            { name: "Заморский Купец", gift: 2000, prestige: 30 },
+            { name: "Поэт", gift: 300, prestige: 100 }
+        ];
+
+        function getCurrentTitle() {
+            let current = titles[0];
+            for (let t of titles) {
+                if (state.prestige >= t.minPrestige) current = t;
+            }
+            return current;
+        }
 
         function getCPS() {
             let baseCps = state.shops.reduce((sum, s) => sum + (s.count * s.baseIncome), 0);
             let craftsmanBonus = state.craftsmen.reduce((sum, c) => sum + (c.level * c.bonus), 0);
             let heirBonus = state.heirs.length * 0.05;
-            return baseCps * (1 + craftsmanBonus + heirBonus);
+            let titleBonus = getCurrentTitle().bonusMult;
+            return baseCps * (1 + craftsmanBonus + heirBonus) * titleBonus;
+        }
+
+        function setAvatar(emoji) {
+            state.avatar = emoji;
+            document.getElementById('current-avatar').innerText = emoji;
         }
 
         function updateUI() {
             document.getElementById('coins').innerText = Math.floor(state.coins);
+            document.getElementById('energy').innerText = state.energy;
+            document.getElementById('prestige').innerText = state.prestige;
             document.getElementById('cps').innerText = getCPS().toFixed(1);
 
+            // Профиль
+            let titleObj = getCurrentTitle();
+            document.getElementById('player-title').innerText = "Статус: " + titleObj.name;
+            document.getElementById('title-progress').innerText = `Престиж: ${state.prestige} (Множитель дохода: x${titleObj.bonusMult})`;
+
+            // Лавки
             const shopsContainer = document.getElementById('shops-list');
             shopsContainer.innerHTML = '';
             state.shops.forEach((shop, index) => {
@@ -135,6 +319,7 @@
                     </div>`;
             });
 
+            // Умельцы
             const craftsmenContainer = document.getElementById('craftsmen-list');
             craftsmenContainer.innerHTML = '';
             state.craftsmen.forEach((c, index) => {
@@ -146,24 +331,56 @@
                     </div>`;
             });
 
+            // Гарем
             const haremContainer = document.getElementById('harem-list');
             haremContainer.innerHTML = '';
             state.harem.forEach((h, index) => {
                 let price = Math.floor(h.basePrice * Math.pow(1.3, h.favor));
                 haremContainer.innerHTML += `
                     <div class="card">
-                        <div><strong>${h.name}</strong><br><small>Симпатия: ${h.favor}</small></div>
-                        <button class="btn" onclick="visitBeauty(${index})" ${state.coins < price ? 'disabled' : ''}>Ухаживать (${price} 💰)</button>
+                        <div class="card-left">
+                            <div class="card-avatar">${h.avatar}</div>
+                            <div><strong>${h.name}</strong><br><small>Симпатия: ${h.favor}</small></div>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn" onclick="visitBeauty(${index})" ${state.coins < price ? 'disabled' : ''}>Ухаживать (${price} 💰)</button>
+                            <button class="btn btn-gift" onclick="openGiftModal(${index})">🎁 Подарить</button>
+                        </div>
                     </div>`;
             });
 
+            // Потомки
             const heirsContainer = document.getElementById('heirs-list');
             heirsContainer.innerHTML = state.heirs.length === 0 ? '<p>У вас пока нет потомков.</p>' : '';
             state.heirs.forEach((heir) => {
                 heirsContainer.innerHTML += `
                     <div class="card">
-                        <div><strong>${heir.name}</strong><br><small>Бонус: +5% ко всем доходам</small></div>
-                        <span style="color: var(--accent);">👑 Наследник</span>
+                        <div class="card-left">
+                            <div class="card-avatar">${heir.avatar}</div>
+                            <div><strong>${heir.name}</strong><br><small>Мать: ${heir.mother}</small></div>
+                        </div>
+                        <span style="color: var(--accent); font-size:12px;">👑 +5% доход</span>
+                    </div>`;
+            });
+
+            // Инвентарь
+            const invContainer = document.getElementById('inventory-list');
+            invContainer.innerHTML = state.inventory.length === 0 ? '<p>Инвентарь пуст.</p>' : '';
+            state.inventory.forEach((item, index) => {
+                invContainer.innerHTML += `
+                    <div class="card">
+                        <div><strong>${item.icon} ${item.name}</strong><br><small>Цена продажи: ${item.price} 💰</small></div>
+                        <button class="btn" onclick="sellItem(${index})">Продать</button>
+                    </div>`;
+            });
+
+            // Банкет
+            const guestsContainer = document.getElementById('guests-list');
+            guestsContainer.innerHTML = state.guests.length === 0 ? '<p>Зал пуст.</p>' : '';
+            state.guests.forEach((g) => {
+                guestsContainer.innerHTML += `
+                    <div class="card">
+                        <div><strong>${g.name}</strong><br><small>Подарок: +${g.gift} 💰 | +${g.prestige} 🏆</small></div>
                     </div>`;
             });
         }
@@ -186,25 +403,76 @@
             if (state.coins >= price) {
                 state.coins -= price;
                 h.favor++;
-                if (Math.random() < 0.3) {
-                    let heirName = "Наследник " + (state.heirs.length + 1);
-                    state.heirs.push({ name: heirName });
-                    alert(`🌸 ${h.name} родила вам наследника: ${heirName}! (+5% к доходу)`);
+                if (Math.random() < 0.35) {
+                    let randomName = childNames[Math.floor(Math.random() * childNames.length)];
+                    let randomAvatar = childAvatars[Math.floor(Math.random() * childAvatars.length)];
+                    state.heirs.push({
+                        name: randomName,
+                        avatar: randomAvatar,
+                        mother: h.name
+                    });
+                    alert(`🌸 ${h.name} родила вам ребёнка: ${randomAvatar} ${randomName}! (+5% к доходу)`);
                 }
                 updateUI();
             }
         }
 
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            event.currentTarget.classList.add('active');
+        // --- Функция Подарков ---
+        function openGiftModal(index) {
+            selectedBeautyIndex = index;
+            const modal = document.getElementById('gift-modal');
+            const list = document.getElementById('gift-items-list');
+            const beauty = state.harem[index];
+
+            document.getElementById('gift-modal-title').innerText = `Подарок для ${beauty.name}`;
+            list.innerHTML = '';
+
+            if (state.inventory.length === 0) {
+                list.innerHTML = '<p>В вашей сумке нет предметов для подарка!</p>';
+            } else {
+                state.inventory.forEach((item, invIdx) => {
+                    list.innerHTML += `
+                        <div class="card">
+                            <div><strong>${item.icon} ${item.name}</strong><br><small>+${item.favorBonus} к симпатии</small></div>
+                            <button class="btn btn-gift" onclick="giveGift(${invIdx})">Подарить</button>
+                        </div>`;
+                });
+            }
+            modal.style.display = 'flex';
         }
 
-        setInterval(() => { state.coins += getCPS() / 10; updateUI(); }, 100);
-        updateUI();
-    </script>
-</body>
-  </html>
-</details>
+        function closeGiftModal() {
+            document.getElementById('gift-modal').style.display = 'none';
+        }
+
+        function giveGift(invIdx) {
+            if (selectedBeautyIndex === null) return;
+            let beauty = state.harem[selectedBeautyIndex];
+            let item = state.inventory[invIdx];
+
+            beauty.favor += item.favorBonus;
+            alert(`🎁 Вы подарили ${item.icon} ${item.name} наложнице ${beauty.name}! Симпатия выросла на +${item.favorBonus}.`);
+
+            state.inventory.splice(invIdx, 1);
+            closeGiftModal();
+            updateUI();
+        }
+
+        function sellItem(index) {
+            let item = state.inventory[index];
+            state.coins += item.price;
+            state.inventory.splice(index, 1);
+            updateUI();
+        }
+
+        function goTravel() {
+            if (state.energy <= 0) { alert("Нет энергии!"); return; }
+            state.energy--;
+            
+            const log = document.getElementById('travel-log');
+            const rand = Math.random();
+            let msg = "";
+
+            if (rand < 0.25) {
+                if (Math.random() < 0.5 && potentialBeautyPool.length > 0) {
+       </details>
